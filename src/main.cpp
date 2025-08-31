@@ -8,41 +8,73 @@
 #include "Network/Server.hpp"
 #include <chrono>
 
+#include <SFML/Graphics.hpp>
+
 #pragma voice
+#pragma stagnant
 
-// //randomizer)))
-// unsigned long long generate_key(){
-//     //return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFULL;
-// }
-
-
+bool isServer = false;
 
 Server server("127.0.0.1", 4171);
 
-Client client1;
-Client client2;
+Client client;
 
-void klyde1() {
-    client1.connect("127.0.0.1", 4171);
-}
+std::string name = "server";
 
-void klyde2() {
-    client2.connect("127.0.0.1", 4171);
+void accept_cls() {
+    while (true)
+    server.accept_client();
 }
 
 int main(int argc, char const *argv[]) {
     srand(time(NULL));
+    if (argc > 1) {
+        if (std::string(argv[1]) == "server") {
+            isServer = true;
+        }
 
-    std::thread klyde1Thread(klyde1);
-    klyde1Thread.detach();
-    server.add_client();
+        if (std::string(argv[1]) == "client") {
+            isServer = false;
+            name = std::string(argv[2]);
+        }
+    }
+    
+    if (isServer) {
+        std::thread t(accept_cls);
+        t.detach();
 
-    std::thread klyde2Thread(klyde2);
-    klyde2Thread.detach();
-    server.add_client();
+        while (true) {
+            auto msg = server.receive();
+            static std::string last = "";
+            static bool isfixed = false;
 
-    client1.send("aorta2))))))");
-    std::cout << server.receive() << std::endl;
+            if (msg == "" || msg == last) continue;
+            std::cout << msg << std::endl;
+            server.send(msg);
+            last = msg;
+        }
+    } else {
+        client.connect("127.0.0.1", 4171);
+        client.send("\xff\xff");
 
-    return 0;
+        while (true) {
+            static std::string msg = "";
+
+            std::cout << "<" << name << "> ";
+            std::getline(std::cin, msg);
+
+            client.send("<" + name + "> " + msg);
+
+            // auto msg_recv = client.receive();
+            // static std::string last = "";
+
+            // if (msg_recv == "" || msg_recv == last || msg_recv == "\xffvoid\xff") continue;
+            // last = msg_recv;
+            // std::cout << msg_recv << std::endl;
+        }
+    }
+
+
+
+    return 0;   
 }

@@ -9,3 +9,4 @@ add_executable(${PROJECT_NAME}
 
 add_subdirectory(external/sfml sfml)
 target_link_libraries(${PROJECT_NAME} sfml-network)
+target_link_libraries(${PROJECT_NAME} sfml-graphics)

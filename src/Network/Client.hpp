@@ -19,12 +19,20 @@ public:
             return;
         }
         std::cout << "Connected! (Client)" << std::endl;
-        socket.setBlocking(true);
+        socket.setBlocking(false);
     }
 
     void send(const std::string& message) {
         packet.clear();
         packet << message;
         socket.send(packet);
+    }
+
+    std::string receive() {
+        if (socket.receive(packet) == sf::Socket::Status::Done) {
+            std::string message;
+            packet >> message;
+            return message;
+        } else return "";
     }
 };
