@@ -26,6 +26,36 @@ void accept_cls() {
     server.accept_client();
 }
 
+void window_func() {
+    sf::RenderWindow window(sf::VideoMode({800, 600}), "Pulsar Client (name: " + name + ")");
+    sf::Font font("build/arial.ttf");
+    sf::Text text(font);
+
+    window.setFramerateLimit(60);
+
+    while (window.isOpen()) {
+        for (auto event = window.pollEvent(); event; event = window.pollEvent()) {
+            if (event->is<sf::Event::Closed>()) {
+                window.close();
+            }
+        }
+
+        window.clear(sf::Color::Black);
+
+        auto msg_recv = client.receive();
+        static std::string last = "";
+
+        if (msg_recv == "" || msg_recv == last || msg_recv == "\xffvoid\xff") continue;
+        last = msg_recv;
+        text.setString(msg_recv);
+        text.setFillColor(sf::Color::Red);
+
+        window.draw(text);
+
+        window.display();
+    }
+}
+
 int main(int argc, char const *argv[]) {
     srand(time(NULL));
     if (argc > 1) {
@@ -55,7 +85,10 @@ int main(int argc, char const *argv[]) {
         }
     } else {
         client.connect("127.0.0.1", 4171);
-        client.send("\xff\xff");
+        client.send("\xffvoid\xff");
+
+        std::thread t(window_func);
+        t.detach();
 
         while (true) {
             static std::string msg = "";
@@ -63,14 +96,7 @@ int main(int argc, char const *argv[]) {
             std::cout << "<" << name << "> ";
             std::getline(std::cin, msg);
 
-            client.send("<" + name + "> " + msg);
-
-            // auto msg_recv = client.receive();
-            // static std::string last = "";
-
-            // if (msg_recv == "" || msg_recv == last || msg_recv == "\xffvoid\xff") continue;
-            // last = msg_recv;
-            // std::cout << msg_recv << std::endl;
+            client.send("<" + name + "> " + msg);            
         }
     }
 
