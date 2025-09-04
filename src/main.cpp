@@ -4,8 +4,6 @@
 #include <cmath>
 #include <random>
 #include <thread>
-#include "Network/Client.hpp"
-#include "Network/Server.hpp"
 #include <chrono>
 
 #include <SFML/Graphics.hpp>
@@ -13,13 +11,18 @@
 #pragma voice
 #pragma stagnant
 
+std::string name = "server";
+
+#define PULSAR_CURRENT_USERNAME &name
+#include "Network/Message.hpp"
+#include "Network/Client.hpp"
+#include "Network/Server.hpp"
+
 bool isServer = false;
 
 Server server("127.0.0.1", 4171);
 
 Client client;
-
-std::string name = "server";
 
 void accept_cls() {
     while (true)
@@ -33,10 +36,20 @@ void window_func() {
 
     window.setFramerateLimit(60);
 
+    std::string messages;
+
     while (window.isOpen()) {
         for (auto event = window.pollEvent(); event; event = window.pollEvent()) {
             if (event->is<sf::Event::Closed>()) {
                 window.close();
+                exit(EXIT_SUCCESS);
+            }
+
+            if (event->is<sf::Event::KeyPressed>()) {
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
+                    window.close();
+                    exit(EXIT_SUCCESS);
+                }
             }
         }
 
@@ -47,7 +60,14 @@ void window_func() {
 
         if (msg_recv == "" || msg_recv == last || msg_recv == "\xffvoid\xff") continue;
         last = msg_recv;
-        text.setString(msg_recv);
+
+        auto json = Json::parse(msg_recv);
+        if ((json["dest"] == name || json["dest"] == "#all") && json["targ"] != name) {
+            messages += "[From \"" + std::string(json["targ"]) + "\"]: " + std::string(json["msg"]) + "\n";
+        }
+
+        text.setString(messages);
+
         text.setFillColor(sf::Color::Red);
 
         window.draw(text);
@@ -92,11 +112,12 @@ int main(int argc, char const *argv[]) {
 
         while (true) {
             static std::string msg = "";
+            static std::string dest = "#all";
 
             std::cout << "<" << name << "> ";
             std::getline(std::cin, msg);
 
-            client.send("<" + name + "> " + msg);            
+            client.send(Message(msg, dest).toString());
         }
     }
 
