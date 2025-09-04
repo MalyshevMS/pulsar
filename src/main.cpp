@@ -28,7 +28,7 @@ void accept_cls() {
 
 void window_func() {
     sf::RenderWindow window(sf::VideoMode({800, 600}), "Pulsar Client (name: " + name + ")");
-    sf::Font font("build/arial.ttf");
+    sf::Font font("res/arial.ttf");
     sf::Text text(font);
 
     window.setFramerateLimit(60);
